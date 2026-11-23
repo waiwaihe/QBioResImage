@@ -1,6 +1,6 @@
 # QBioResImage
 
-**Current release: v1.0.0**
+**Current release: v1.0.1**
 
 QBioResImage is a standalone Windows application for quantitative biomedical image analysis. It integrates Western blot densitometry, confocal fluorescence quantification, Oil Red O staining analysis, and BODIPY puncta measurement.
 
@@ -49,7 +49,7 @@ The executable is larger than GitHub's normal 100 MB file limit and should there
 
 ## Running the Windows application
 
-1. Download `QBioResImage-v1.0.0-Windows-x64.exe` from Releases.
+1. Download `QBioResImage-v1.0.1-Windows-x64.exe` from Releases.
 2. Double-click the file to start the application.
 3. Select an analysis mode from the top of the window.
 4. Import one or more supported images.
