@@ -77,12 +77,25 @@ CONFOCAL_HEADERS = [
 
 def analyze_confocal(path, channel_name, threshold_low, threshold_high):
     """Replicate ImageJ RGB Stack + channel + threshold-limited Measure."""
-    with Image.open(path) as image:
-        tags = getattr(image, "tag_v2", {})
-        x_resolution = float(tags.get(282, 1.0))
-        y_resolution = float(tags.get(283, 1.0))
-        resolution_unit = int(tags.get(296, 1))
-        raw = np.asarray(image)
+    try:
+        with Image.open(path) as image:
+            frame_count = int(getattr(image, "n_frames", 1))
+            if frame_count != 1:
+                raise ValueError(
+                    f"This TIFF contains {frame_count} frames. Export the required plane as a single RGB image first."
+                )
+            tags = getattr(image, "tag_v2", {})
+            x_resolution = float(tags.get(282, 1.0))
+            y_resolution = float(tags.get(283, 1.0))
+            resolution_unit = int(tags.get(296, 1))
+            image.load()
+            raw = np.array(image.convert("RGB"), dtype=np.uint8, copy=True)
+    except ValueError:
+        raise
+    except Exception as error:
+        raise ValueError(
+            "The image could not be decoded. QBioResImage supports single-frame 8-bit RGB TIFF, PNG, JPEG and BMP files."
+        ) from error
 
     if raw.ndim != 3 or raw.shape[2] < 3:
         raise ValueError("Confocal analysis requires an RGB image.")
@@ -281,7 +294,7 @@ def bodipy_excel_text(results, selected_rows=None):
 class WBApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Image Quantification · WB / Confocal / Oil Red O / BODIPY")
+        self.root.title("QBioResImage - Quantification of Biomedical Research Images")
         self.root.geometry("1380x820")
         self.file = None
         self.gray = None
@@ -1211,6 +1224,15 @@ class WBApp:
 
 
 if __name__ == "__main__":
+    if "--self-test-tiff" in sys.argv:
+        test_paths = [value for value in sys.argv[1:] if value != "--self-test-tiff"]
+        if not test_paths:
+            raise SystemExit(2)
+        for test_path in test_paths:
+            tested = analyze_confocal(test_path, "Red (1/3)", 45, 255)
+            if tested["selected_pixels"] <= 0 or tested["raw_intden"] <= 0:
+                raise SystemExit(3)
+        raise SystemExit(0)
     if "--self-test-bodipy" in sys.argv:
         test_paths = [value for value in sys.argv[1:] if value != "--self-test-bodipy"]
         if not test_paths:
